@@ -5,6 +5,7 @@ import socketHandler from "./websocket/socketHandler.js";
 import { Server } from "socket.io";
 import authRoutes from "./routes/authRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
 // TODO: route imports
 
 
@@ -22,7 +23,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/room", roomRoutes);
-
+app.use("/api/chat", chatRoutes); 
 //SocketHandler
 socketHandler(io);
 
