@@ -12,6 +12,7 @@
   "type": "module",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/translate": "^8.5.0",
     "@prisma/client": "^6.4.0",
     "bcrypt": "^5.1.1",
     "jsonwebtoken": "^9.0.2",
@@ -19,8 +20,8 @@
   },
   "devDependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "nodemon": "^3.1.9",
-    "dotenv": "^16.4.7"
+    "nodemon": "^3.1.9"
   }
 }
