@@ -8,29 +8,28 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-
-
-
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  password  String
-  username  String    @unique
-  rooms     RoomUser[]
-  ownedRooms Room[]   @relation("UserRooms") // 👈 Fix: Add this field
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id         String    @id @default(uuid())
+  email      String    @unique
+  password   String
+  username   String    @unique
+  rooms      RoomUser[]
+  ownedRooms Room[]   @relation("UserRooms") 
+  messages   Message[] // 👈 Added: Messages sent by the user
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }
 
 model Room {
   id        String    @id @default(uuid())
-  name      String
+  name      String    @unique
   ownerId   String
   members   RoomUser[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  messages  Message[]  // 👈 Added: Messages in the room
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
-  owner     User      @relation("UserRooms", fields: [ownerId], references: [id]) // 👈 Fix: Add relation name
+  owner     User      @relation("UserRooms", fields: [ownerId], references: [id])
 }
 
 model RoomUser {
@@ -44,3 +43,13 @@ model RoomUser {
   @@id([userId, roomId])
 }
 
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  senderId  String
+  roomId    String
+  createdAt DateTime @default(now())
+
+  sender    User     @relation(fields: [senderId], references: [id])
+  room      Room     @relation(fields: [roomId], references: [id])
+}
