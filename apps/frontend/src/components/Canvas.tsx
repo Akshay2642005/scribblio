@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Socket } from 'socket.io-client';
-import { DrawingPoint, StickyNote } from '../types';
+import { DrawingPoint } from '../types';
 import { Square, Circle, Pencil, Type, Eraser } from 'lucide-react';
 
 interface CanvasProps {
@@ -17,8 +17,8 @@ export const Canvas: React.FC<CanvasProps> = ({ socket, roomId }) => {
   const [shape, setShape] = useState<string>('');
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
-  const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([]);
-  const [newNoteText, setNewNoteText] = useState('');
+  //const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([]);
+  //const [newNoteText, setNewNoteText] = useState('');
 
   const colors = [
     '#000000', '#ffffff', '#ff0000', '#00ff00', '#0000ff', 
@@ -66,10 +66,11 @@ export const Canvas: React.FC<CanvasProps> = ({ socket, roomId }) => {
       contextRef.current.strokeStyle = color;
       contextRef.current.lineWidth = lineWidth;
     });
-
+/*
     socket.on('addStickyNote', (note: StickyNote) => {
       setStickyNotes(prev => [...prev, note]);
     });
+  */
 
     socket.on('clear', () => {
       if (!contextRef.current || !canvasRef.current) return;
@@ -125,29 +126,33 @@ export const Canvas: React.FC<CanvasProps> = ({ socket, roomId }) => {
 
   const draw = (e: React.MouseEvent) => {
     if (!isDrawing || !contextRef.current || !canvasRef.current) return;
-
+  
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-
-    if (tool === 'shape' && startPoint) {
-      const ctx = contextRef.current;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawShape(x, y, shape, color);
+  
+    const ctx = contextRef.current;
+  
+    if (tool === 'eraser') {
+      ctx.globalCompositeOperation = 'destination-out'; // Makes eraser remove strokes
+      ctx.lineWidth = 10; // Adjust eraser thickness
     } else {
-      contextRef.current.lineTo(x, y);
-      contextRef.current.stroke();
-
-      socket.emit('draw', roomId, {
-        x,
-        y,
-        color: tool === 'eraser' ? '#ffffff' : color,
-        lineWidth,
-        tool
-      });
+      ctx.globalCompositeOperation = 'source-over'; // Regular drawing mode
     }
+  
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  
+    socket.emit('draw', roomId, {
+      x,
+      y,
+      color: tool === 'eraser' ? '#ffffff' : color,
+      lineWidth,
+      tool
+    });
   };
+  
 
   const stopDrawing = (e: React.MouseEvent) => {
     if (!contextRef.current) return;
@@ -178,10 +183,10 @@ export const Canvas: React.FC<CanvasProps> = ({ socket, roomId }) => {
   const clearCanvas = () => {
     if (!contextRef.current || !canvasRef.current) return;
     contextRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    setStickyNotes([]);
+    //setStickyNotes([]);
     socket.emit('clear', roomId);
   };
-
+/*
   const addStickyNote = () => {
     if (!newNoteText.trim()) return;
 
@@ -193,118 +198,102 @@ export const Canvas: React.FC<CanvasProps> = ({ socket, roomId }) => {
       color: color
     };
 
-    setStickyNotes(prev => [...prev, note]);
+    //setStickyNotes(prev => [...prev, note]);
     socket.emit('addStickyNote', roomId, note);
     setNewNoteText('');
   };
+  */
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="flex gap-4 items-center mb-4 bg-white p-4 rounded-lg shadow-md">
-        <div className="flex gap-2">
-          <button
-            onClick={() => setTool('pencil')}
-            className={`p-2 rounded ${tool === 'pencil' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            title="Pencil"
-          >
-            <Pencil size={20} />
-          </button>
-          <button
-            onClick={() => setTool('eraser')}
-            className={`p-2 rounded ${tool === 'eraser' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            title="Eraser"
-          >
-            <Eraser size={20} />
-          </button>
-          <button
-            onClick={() => { setTool('shape'); setShape('rectangle'); }}
-            className={`p-2 rounded ${tool === 'shape' && shape === 'rectangle' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            title="Rectangle"
-          >
-            <Square size={20} />
-          </button>
-          <button
-            onClick={() => { setTool('shape'); setShape('circle'); }}
-            className={`p-2 rounded ${tool === 'shape' && shape === 'circle' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            title="Circle"
-          >
-            <Circle size={20} />
-          </button>
-        </div>
-
-        <div className="flex gap-2">
-          {colors.map((c) => (
-            <button
-              key={c}
-              onClick={() => setColor(c)}
-              className={`w-6 h-6 rounded-full ${color === c ? 'ring-2 ring-blue-500' : ''}`}
-              style={{ backgroundColor: c, border: c === '#ffffff' ? '1px solid #e5e7eb' : 'none' }}
-            />
-          ))}
-        </div>
-
-        <input
-          type="range"
-          min="1"
-          max="20"
-          value={lineWidth}
-          onChange={(e) => setLineWidth(Number(e.target.value))}
-          className="w-32"
-        />
-
-        <div className="flex gap-2 items-center">
-          <input
-            type="text"
-            value={newNoteText}
-            onChange={(e) => setNewNoteText(e.target.value)}
-            placeholder="Add sticky note..."
-            className="px-3 py-1 border rounded"
-          />
-          <button
-            onClick={addStickyNote}
-            className="p-2 rounded bg-yellow-400 hover:bg-yellow-500"
-            title="Add Sticky Note"
-          >
-            <Type size={20} />
-          </button>
-        </div>
+    <div className="flex">
+      <div className="flex flex-col gap-4 items-center mb-4 bg-white p-4 rounded-lg shadow-md fixed left-0 top-0 h-full">
+      <div className="flex flex-col gap-2">
+        <button
+        onClick={() => setTool('pencil')}
+        className={`p-2 rounded ${tool === 'pencil' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+        title="Pencil"
+        >
+        <Pencil size={20} />
+        </button>
+        <button
+          onClick={() => setTool(tool === 'eraser' ? 'pencil' : 'eraser')}
+          className={`p-2 rounded transition duration-200 ${
+            tool === 'eraser' ? 'bg-red-500 text-white' : 'bg-gray-200 hover:bg-gray-300'
+          }`}
+          title="Eraser"
+        >
+          <Eraser size={20} />
+        </button>
 
         <button
-          onClick={clearCanvas}
-          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+        onClick={() => { setTool('shape'); setShape('rectangle'); }}
+        className={`p-2 rounded ${tool === 'shape' && shape === 'rectangle' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+        title="Rectangle"
         >
-          Clear Canvas
+        <Square size={20} />
+        </button>
+        <button
+        onClick={() => { setTool('shape'); setShape('circle'); }}
+        className={`p-2 rounded ${tool === 'shape' && shape === 'circle' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+        title="Circle"
+        >
+        <Circle size={20} />
         </button>
       </div>
 
-      <div className="relative">
-        <canvas
-          ref={canvasRef}
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
-          className="border border-gray-300 rounded-lg shadow-lg bg-white"
+      <div className="flex flex-col gap-2 mt-4">
+        {colors.map((c) => (
+        <button
+          key={c}
+          onClick={() => setColor(c)}
+          className={`w-6 h-6 rounded-full ${color === c ? 'ring-2 ring-blue-500' : ''}`}
+          style={{ backgroundColor: c, border: c === '#ffffff' ? '1px solid #e5e7eb' : 'none' }}
         />
-        
-        {stickyNotes.map((note) => (
-          <div
-            key={note.id}
-            style={{
-              position: 'absolute',
-              left: note.x,
-              top: note.y,
-              backgroundColor: note.color,
-              padding: '8px',
-              borderRadius: '4px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              maxWidth: '200px',
-              wordBreak: 'break-word'
-            }}
-          >
-            {note.text}
-          </div>
         ))}
+      </div>
+      
+      <input
+        type="color"
+        value={color}
+        onChange={(e) => setColor(e.target.value)}
+        className="w-5 h-5 rounded-full border-none cursor-pointer p-3 bg-transparent shadow-md ring-2 ring-blue-500 hover:ring-blue-700 transition duration-200"
+        style={{ backgroundColor: color, border: color === '#ffffff' ? '1px solid #e5e7eb' : 'none' }}
+      />
+
+      <input
+        type="range"
+        min="1"
+        max="20"
+        value={lineWidth}
+        onChange={(e) => setLineWidth(Number(e.target.value))}
+        className="w-20 mt-4"
+        style={{ margin: '5px 0' }}
+      />
+
+      
+
+
+      <button
+        onClick={clearCanvas}
+        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors mt-4"
+      >
+        Clear Canvas
+      </button>
+      </div>
+
+      <div className="flex-grow flex justify-center items-center">
+      <canvas
+        ref={canvasRef}
+        onMouseDown={startDrawing}
+        onMouseMove={draw}
+        onMouseUp={stopDrawing}
+        onMouseLeave={stopDrawing}
+        className="border border-gray-300 rounded-lg shadow-lg bg-white"
+      />
+      </div>
+
+      <div className="flex flex-col gap-4 items-center mb-4 bg-white p-4 rounded-lg shadow-md fixed right-0 top-0 h-full">
+      {/* Chat component or chat related code goes here */}
       </div>
     </div>
   );

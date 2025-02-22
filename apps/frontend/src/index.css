@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.bg-white{
+  background-color: rgb(241, 241, 241);
+}
+
+
+

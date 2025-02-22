@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { Canvas } from './components/Canvas';
 import { RoomManager } from './components/RoomManager';
+import { Chat } from './components/Chat';
 
 // Create socket with explicit configuration
-const socket = io('http://localhost:3002', {
+const socket = io('http://localhost:3001', {
   reconnection: true,
   reconnectionAttempts: 5,
   reconnectionDelay: 1000,
@@ -74,14 +75,23 @@ function App() {
         )}
 
         {connected && currentRoom && (
-          <div className="flex flex-col items-center gap-4">
-            <div className="bg-white p-4 rounded-lg shadow mb-4">
+            <>
+            <div className="flex flex-col items-center gap-4">
+              <div className="bg-white p-4 rounded-lg shadow mb-4 flex items-center gap-2">
               <p className="text-gray-600">
                 Room ID: <span className="font-mono font-bold">{currentRoom}</span>
               </p>
+              <button
+                className="bg-blue-500 text-white px-2 py-1 rounded"
+                onClick={() => navigator.clipboard.writeText(currentRoom || '')}
+              >
+                Copy
+              </button>
+              </div>
+              <Canvas socket={socket} roomId={currentRoom} />
             </div>
-            <Canvas socket={socket} roomId={currentRoom} />
-          </div>
+            <Chat socket={socket} roomId={currentRoom} />
+            </>
         )}
       </div>
     </div>
