@@ -36,7 +36,7 @@ const joinRoom = async (req, res) => {
     if (!roomName) return res.status(400).json({ error: "Room name is required" });
 
     // Find the room by name
-    const room = await prisma.room.findFirst({ where: { name: roomName } });
+    const room = await prisma.room.findUnique({ where: { name: roomName } });
     if (!room) return res.status(404).json({ error: "Room not found!" });
 
     const roomId = room.id;

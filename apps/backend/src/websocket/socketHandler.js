@@ -15,6 +15,23 @@ const socketHandler = (io) => {
       console.log(`${username} joined room: ${roomId}`);
     });
 
+    socket.on("sendMessage", async ({ roomId, userId, content }) => {
+      try {
+        const message = await prisma.message.create({
+          data: {
+            content,
+            senderId: userId,
+            roomId,
+          },
+          include: { sender: true },
+        });
+
+        io.to(roomId).emit("newMessage", message); // Broadcast message
+      } catch (error) {
+        console.error("Error saving message:", error);
+      }
+    });
+
     // Handle drawing events
     socket.on("draw", (data) => {
       io.to(data.roomId).emit("draw", data);
