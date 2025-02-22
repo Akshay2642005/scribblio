@@ -8,32 +8,39 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+
+
+
 model User {
-  id    String  @id @default(uuid())
-  email String  @unique
-  rooms RoomUsers[]
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  username  String    @unique
+  rooms     RoomUser[]
+  ownedRooms Room[]   @relation("UserRooms") // 👈 Fix: Add this field
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Room {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   name      String
-  drawings  Drawing[]
-  users     RoomUsers[]
+  ownerId   String
+  members   RoomUser[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  owner     User      @relation("UserRooms", fields: [ownerId], references: [id]) // 👈 Fix: Add relation name
 }
 
-model RoomUsers {
-  userId String
-  roomId String
-  user   User @relation(fields: [userId], references: [id])
-  room   Room @relation(fields: [roomId], references: [id])
+model RoomUser {
+  userId   String
+  roomId   String
+  role     String    @default("member")
 
-  @@id([userId, roomId]) // Composite primary key for many-to-many relationship
-}
+  user     User      @relation(fields: [userId], references: [id])
+  room     Room      @relation(fields: [roomId], references: [id])
 
-model Drawing {
-  id      String @id @default(uuid())
-  roomId  String
-  data    String // JSON-encoded drawing data
-  room    Room   @relation(fields: [roomId], references: [id])
+  @@id([userId, roomId])
 }
 
