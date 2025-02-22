@@ -1,12 +1,30 @@
-import roomService from "../services/roomService.js";
+import prisma from "../config/db.js";
 
-const createRoom = async (req, res) => {
+const createRoom = async (name, ownerId) => {
+  if (!name || !ownerId) throw new Error("Room name and ownerId are required!");
+
+  // Check if user exists
+  const user = await prisma.user.findUnique({ where: { id: ownerId } });
+  if (!user) throw new Error("User does not exist!");
+
   try {
-    const { name } = req.body;
-    const room = await roomService.createRoom(name);
-    res.status(201).json(room);
+    const room = await prisma.room.create({
+      data: {
+        name,
+        ownerId,
+        members: {
+          create: {
+            userId: ownerId,
+            role: "admin",
+          },
+        },
+      },
+    });
+
+    return room;
   } catch (error) {
-    res.status(500).json({ error: "Error creating room" });
+    console.error("❌ Error creating room:", error);
+    throw new Error("Database error: Unable to create room.");
   }
 };
 

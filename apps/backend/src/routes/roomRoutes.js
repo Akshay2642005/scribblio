@@ -1,28 +1,24 @@
 import express from "express";
-import roomService from "../services/roomService.js";
+import roomService from "../controllers/roomController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
-import roomController from "../controllers/roomController.js";
 
 const router = express.Router();
 
-// Promote a user to admin
-router.post("/makeAdmin", authMiddleware, async (req, res) => {
+router.post("/create", authMiddleware, async (req, res) => {
   try {
-    const { roomId, targetUserId } = req.body;
-    const adminId = req.user.userId;
+    const { name } = req.body;
+    const ownerId = req.user.userId;
 
-    await roomService.makeAdmin(roomId, adminId, targetUserId);
+    if (!name) return res.status(400).json({ error: "Room name is required!" });
 
-    res.json({ message: "User promoted to admin" });
+    const room = await roomService.createRoom(name, ownerId);
+    res.status(201).json({ message: "Room created successfully", roomId: room.id });
   } catch (error) {
-    res.status(403).json({ error: error.message });
+    console.error("❌ Room creation failed:", error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 
-
-
-
-router.post("/create", roomController.createRoom);
 
 export default router;
 
