@@ -1,112 +1,85 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Socket } from 'socket.io-client';
-import { nanoid } from 'nanoid';
-import { Send, MessageSquare } from 'lucide-react';
-import { ChatMessage } from '../types';
+import { useState, useEffect, useRef } from "react";
 
 interface ChatProps {
-  socket: Socket;
+  socket: any;
   roomId: string;
 }
 
 export const Chat: React.FC<ChatProps> = ({ socket, roomId }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [isOpen, setIsOpen] = useState(true);
+  const [messages, setMessages] = useState<{ user: string; text: string }[]>([]);
+  const [message, setMessage] = useState("");
+  const [username, setUsername] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    socket.on('chat', (message: ChatMessage) => {
-      setMessages(prev => [...prev, message]);
-    });
-
-    return () => {
-      socket.off('chat');
-    };
-  }, [socket]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Auto-scroll to the latest message
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-
-    const message: ChatMessage = {
-      id: nanoid(),
-      userId: socket.id || 'unknown',
-      text: newMessage,
-      timestamp: new Date().toISOString(),
+  useEffect(() => {
+    // Listen for incoming messages in the correct room
+    const handleIncomingMessage = (data: { user: string; text: string; roomId: string }) => {
+      if (data.roomId === roomId) {
+        setMessages((prev) => [...prev, { user: data.user, text: data.text }]);
+      }
     };
 
-    socket.emit('chat', roomId, message);
-    setNewMessage('');
+    socket.on("chat", handleIncomingMessage);
+
+    return () => {
+      socket.off("chat", handleIncomingMessage);
+    };
+  }, [socket, roomId]);
+
+  const sendMessage = () => {
+    if (message.trim() && username.trim()) {
+      const chatMessage = { user: username, text: message, roomId };
+      socket.emit("chat", chatMessage);
+      setMessages((prev) => [...prev, { user: "You", text: message }]);
+      setMessage("");
+    }
   };
 
   return (
-    <div className="fixed bottom-4 right-4 w-80 bg-white rounded-lg shadow-lg">
-      <div className="flex items-center justify-between p-4 border-b">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <MessageSquare size={20} />
-          Chat
-        </h3>
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="text-gray-500 hover:text-gray-700"
-        >
-          {isOpen ? '−' : '+'}
-        </button>
+    <div className="bg-white shadow-lg rounded-lg p-4 w-80 h-96 flex flex-col">
+      <h2 className="text-lg font-bold mb-2">Chat Room</h2>
+
+      {/* Username Input */}
+      {!username && (
+        <div className="mb-2">
+          <input
+            type="text"
+            placeholder="Enter your name"
+            className="border p-2 w-full rounded"
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+      )}
+
+      {/* Chat Messages */}
+      <div className="flex-1 overflow-y-auto border p-2 rounded mb-2">
+        {messages.map((msg, index) => (
+          <div key={index} className={`mb-1 ${msg.user === "You" ? "text-blue-600" : "text-gray-800"}`}>
+            <strong>{msg.user}:</strong> {msg.text}
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
       </div>
 
-      {isOpen && (
-        <>
-          <div className="h-80 overflow-y-auto p-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`mb-4 ${
-                  message.userId === socket.id
-                    ? 'flex flex-col items-end'
-                    : 'flex flex-col items-start'
-                }`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-lg p-3 ${
-                    message.userId === socket.id
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  <p className="break-words">{message.text}</p>
-                  <span className="text-xs opacity-75 mt-1 block">
-                    {new Date(message.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <form onSubmit={sendMessage} className="p-4 border-t">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="submit"
-                className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                <Send size={20} />
-              </button>
-            </div>
-          </form>
-        </>
-      )}
+      {/* Message Input */}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          placeholder="Type a message..."
+          className="border p-2 flex-1 rounded"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+        />
+        <button className="bg-blue-500 text-white px-3 py-2 rounded" onClick={sendMessage}>
+          Send
+        </button>
+      </div>
     </div>
   );
 };
