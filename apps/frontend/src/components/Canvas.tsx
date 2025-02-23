@@ -264,7 +264,7 @@ export const Canvas: React.FC<CanvasProps> = ({ socket, roomId }) => {
         />
       </div>
 
-      <div className="flex flex-col gap-4 items-center mb-4 bg-white p-4 rounded-lg shadow-md fixed right-0 top-0 h-full">
+      <div className="flex flex-col gap-4 items-center mb-4 bg-blue-500 p-4 rounded-lg shadow-md fixed right-0 top-0 h-full">
         {/* Chat component or chat related code goes here */}
       </div>
     </div>

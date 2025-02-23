@@ -68,7 +68,7 @@ export const RoomManager: React.FC<RoomManagerProps> = ({ socket, onJoinRoom }) 
           type="text"
           value={roomId}
           onChange={(e) => setRoomId(e.target.value)}
-          placeholder="Enter Room ID"
+          placeholder="Enter Room Name"
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out"
         />
         <button
