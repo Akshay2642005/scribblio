@@ -1,6 +1,6 @@
 import prisma from "../config/db.js";
 
-export const createRoom = async (req, res) => {
+const createRoom = async (req, res) => {
   try {
     const { name } = req.body;
     const ownerId = req.user.userId;
@@ -68,12 +68,12 @@ const joinRoom = async (req, res) => {
   }
 };
 
-export const getRoomUsers = async (req, res) => {
+const getRoomUsers = async (req, res) => {
   try {
-    const { roomId } = req.params;
+    const { name } = req.params;
 
     const users = await prisma.roomUser.findMany({
-      where: { roomId },
+      where: { name },
       include: {
         user: { select: { id: true, username: true } },
       },
@@ -86,5 +86,23 @@ export const getRoomUsers = async (req, res) => {
   }
 };
 
-export default { createRoom, joinRoom, getRoomUsers };
+const leaveRoom = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const userId = req.user.userId;
+
+    await prisma.roomUser.deleteMany({
+      where: {
+        AND: [{ userId }, { roomId }],
+      },
+    });
+
+    res.json({ message: "User left the room" });
+  } catch (error) {
+    console.error("❌ Error leaving room:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export default { createRoom, joinRoom, getRoomUsers, leaveRoom };
 
