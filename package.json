@@ -9,6 +9,7 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
+    "axios": "^1.7.9",
     "prettier": "^3.5.0",
     "prisma": "^6.4.0",
     "turbo": "^2.4.2",
