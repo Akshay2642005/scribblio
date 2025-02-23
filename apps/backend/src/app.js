@@ -6,6 +6,7 @@ import { Server } from "socket.io";
 import authRoutes from "./routes/authRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
+import magicDoodleRoutes from './routes/magicDoodleRoutes.js';
 // TODO: route imports
 
 
@@ -24,6 +25,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/room", roomRoutes);
 app.use("/api/chat", chatRoutes); 
+app.use('/api/magic', magicDoodleRoutes);
 //SocketHandler
 socketHandler(io);
 

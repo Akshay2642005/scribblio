@@ -1,6 +1,4 @@
-import * as tf from "@tensorflow/tfjs";
-import { loadModel, predictGesture } from "ai-model";
-import { translateText } from "../controllers/translateController.js"; // Ensure this exists
+import { loadModel, predictGesture } from "../config/models.js";
 import prisma from "../config/db.js";
 
 const activeUsers = {};
@@ -23,15 +21,6 @@ const socketHandler = (io) => {
     });
 
     // Translation Request
-    socket.on("translate_request", async ({ text, targetLang, roomId }) => {
-      try {
-        const translatedText = await translateText(text, targetLang);
-        io.to(roomId).emit("translated_text", { text, translatedText, targetLang });
-      } catch (error) {
-        console.error("Translation Error:", error);
-      }
-    });
-
     // User joins a room
     socket.on("joinRoom", ({ roomId, username }) => {
       socket.join(roomId);
