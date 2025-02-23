@@ -3,8 +3,13 @@
 @tailwind utilities;
 
 .bg-white{
-  background-color: rgb(241, 241, 241);
+  background-color: #f3f4f6;
 }
+
+.text-gray-800{
+  color: rgb(4, 4, 4);
+}
+
 
 
 

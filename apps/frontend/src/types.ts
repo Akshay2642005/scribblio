@@ -5,6 +5,8 @@ export interface DrawingPoint {
   lineWidth: number;
   tool: string;
   shape?: string;
+  startX?: number;
+  startY?: number;
 }
 
 export interface Room {
