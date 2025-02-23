@@ -8,16 +8,21 @@ interface ChatProps {
 export const Chat: React.FC<ChatProps> = ({ socket, roomId }) => {
   const [messages, setMessages] = useState<{ user: string; text: string }[]>([]);
   const [message, setMessage] = useState("");
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(localStorage.getItem("chatUsername") || "");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Auto-scroll to the latest message
+    // Auto-scroll to latest message
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
-    // Listen for incoming messages in the correct room
+    if (!socket) return;
+
+    // Join the room on mount
+    socket.emit("joinRoom", roomId);
+
+    // Listen for incoming messages
     const handleIncomingMessage = (data: { user: string; text: string; roomId: string }) => {
       if (data.roomId === roomId) {
         setMessages((prev) => [...prev, { user: data.user, text: data.text }]);
@@ -40,6 +45,11 @@ export const Chat: React.FC<ChatProps> = ({ socket, roomId }) => {
     }
   };
 
+  const handleSetUsername = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUsername(e.target.value);
+    localStorage.setItem("chatUsername", e.target.value);
+  };
+
   return (
     <div className="bg-white shadow-lg rounded-lg p-4 w-80 h-96 flex flex-col">
       <h2 className="text-lg font-bold mb-2">Chat Room</h2>
@@ -51,7 +61,7 @@ export const Chat: React.FC<ChatProps> = ({ socket, roomId }) => {
             type="text"
             placeholder="Enter your name"
             className="border p-2 w-full rounded"
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={handleSetUsername}
           />
         </div>
       )}
@@ -83,3 +93,4 @@ export const Chat: React.FC<ChatProps> = ({ socket, roomId }) => {
     </div>
   );
 };
+
