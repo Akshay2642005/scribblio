@@ -7,7 +7,7 @@ import { Chat } from './components/Chat';
 //import Squares from './components/Squares.tsx';
 
 // Create socket with explicit configuration
-const socket = io('http://localhost:3001', {
+const socket = io('http://localhost:5000', {
   reconnection: true,
   reconnectionAttempts: 5,
   reconnectionDelay: 1000,
@@ -53,15 +53,15 @@ function App() {
   const handleJoinRoom = (roomId: string) => {
     setCurrentRoom(roomId);
   };
-/*
-  const handleLoginSuccess = () => {
-    setIsLoggedIn(true); // Set login status to true on successful login
-  };
-
-  if (!isLoggedIn) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />; // Show login page if not logged in
-  }
-*/
+  /*
+    const handleLoginSuccess = () => {
+      setIsLoggedIn(true); // Set login status to true on successful login
+    };
+  
+    if (!isLoggedIn) {
+      return <LoginPage onLoginSuccess={handleLoginSuccess} />; // Show login page if not logged in
+    }
+  */
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-500 to-teal-500 p-8 relative">

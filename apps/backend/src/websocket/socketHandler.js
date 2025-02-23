@@ -1,26 +1,29 @@
 import { loadModel, predictGesture } from "../config/models.js";
 import prisma from "../config/db.js";
 
-const activeUsers = {};
+const rooms = new Map(); // Define rooms globally
+const activeUsers = {}; // Track active users per room
 
 const socketHandler = (io) => {
   io.on("connection", (socket) => {
     console.log(`🟢 User connected: ${socket.id}`);
 
-    // Load AI model when server starts
-    loadModel().then(() => console.log("✅ AI Model Loaded"));
-
-    // AI Gesture Recognition
-    socket.on("hand_data", async ({ roomId, landmarks }) => {
-      const prediction = await predictGesture(landmarks);
-      if (prediction === "draw") {
-        io.to(roomId).emit("draw", landmarks[8]); // Index finger tip
-      } else if (prediction === "erase") {
-        io.to(roomId).emit("clearCanvas");
+    // User creates a room
+    socket.on('createRoom', (roomId, callback) => {
+      console.log('Creating room:', roomId);
+      if (rooms.has(roomId)) {
+        return callback({ success: false, error: 'Room already exists' });
       }
+      rooms.set(roomId, {
+        users: [socket.id],
+        maxUsers: 5,
+        messages: []
+      });
+      socket.join(roomId);
+      callback({ success: true });
+      console.log('Room created:', roomId);
     });
 
-    // Translation Request
     // User joins a room
     socket.on("joinRoom", ({ roomId, username }) => {
       socket.join(roomId);
@@ -59,12 +62,6 @@ const socketHandler = (io) => {
       io.to(roomId).emit("clearCanvas");
     });
 
-    // Admin kicks a user
-    socket.on("kickUser", ({ roomId, targetSocketId }) => {
-      io.to(targetSocketId).emit("kicked");
-      io.sockets.sockets.get(targetSocketId)?.disconnect();
-    });
-
     // Handle user disconnection
     socket.on("disconnect", () => {
       for (const roomId in activeUsers) {
@@ -75,7 +72,7 @@ const socketHandler = (io) => {
     });
   });
 };
-
 export default socketHandler;
+
 
 
