@@ -18,7 +18,7 @@ function App() {
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // New state for login status
+  //const [isLoggedIn, setIsLoggedIn] = useState(false); // New state for login status
 
   useEffect(() => {
     const handleConnect = () => {
